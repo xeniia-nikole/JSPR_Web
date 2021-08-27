@@ -5,22 +5,9 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public final class Request {
-    private final String method;
-    private final String path;
-    private final Map<String, String> headers;
-    private final String queryString;
-    private final Map<String, List<String>> queryParams;
-
-
-    public Request(String method, String path, Map<String, String> headers,
-                   String queryString, Map<String, List<String>> queryParams) {
-        this.method = method;
-        this.path = path;
-        this.headers = headers;
-        this.queryString = queryString;
-        this.queryParams = queryParams;
-    }
+public record Request(String method, String path,
+                      Map<String, String> headers, String queryString,
+                      Map<String, List<String>> queryParams) {
 
 
     public String getMethod() {
