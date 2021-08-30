@@ -5,24 +5,10 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public final class Request {
-    private final String method;
-    private final String path;
-    private final Map<String, String> headers;
-    private final Map<String, String> body;
-    private final String queryString;
-    private final Map<String, List<String>> queryParams;
-
-    public Request(String method, String path,
-                   Map<String, String> headers, Map<String, String> body,
-                   String queryString, Map<String, List<String>> queryParams) {
-        this.method = method;
-        this.path = path;
-        this.headers = headers;
-        this.body = body;
-        this.queryString = queryString;
-        this.queryParams = queryParams;
-    }
+public record Request(String method, String path,
+                      Map<String, String> headers,
+                      Map<String, String> body, String queryString,
+                      Map<String, List<String>> queryParams) {
 
 
     public String getMethod() {
@@ -86,20 +72,17 @@ public final class Request {
         final var headersString = new String(headersBytes);
         final var headers = headersMap(headersString);
 // search and get body
+        byte[] bodyBytes = new byte[0];
         if (!method.equals("GET")) {
             input.skip(headersDelimiter.length);
-// get Content-Length
             final var contentLength = extractHeader(
                     Arrays.asList(headersString.split("\r\n")), "Content-Length");
-// get body
-            byte[] bodyBytes = new byte[0];
             if (contentLength.isPresent()) {
                 final var length = Integer.parseInt(contentLength.get());
                 bodyBytes = input.readNBytes(length);
             }
-
-            final var body = getBody(bodyBytes);
         }
+        final var body = getBody(bodyBytes);
 
         output.write((
                 "HTTP/1.1 200 OK\r\n" +
@@ -108,9 +91,8 @@ public final class Request {
                         "\r\n"
         ).getBytes());
         output.flush();
-// НЕ ХОЧЕТ ВОЗВРАЩАТЬ BODY, ТРЕДУЕТ СДЕЛАТЬ ЕГО СТАТИЧНЫМ
-        return new Request(method, path, headers, body, queryString, queryParams);
 
+        return new Request(method, path, headers, body, queryString, queryParams);
     }
 
     private static Map<String, String> getBody(byte[] bodyBytes) {
@@ -164,7 +146,7 @@ public final class Request {
         return params;
     }
 
-    // from google guava with modifications
+    // from Google guava with modifications
     private static int indexOf(byte[] array, byte[] target, int start, int max) {
         outer:
         for (int i = start; i < max - target.length + 1; i++) {
@@ -197,30 +179,6 @@ public final class Request {
                 ", queryString='" + queryString + '\'' +
                 ", queryParams=" + queryParams +
                 '}';
-    }
-
-    public String method() {
-        return method;
-    }
-
-    public String path() {
-        return path;
-    }
-
-    public Map<String, String> headers() {
-        return headers;
-    }
-
-    public String body() {
-        return body;
-    }
-
-    public String queryString() {
-        return queryString;
-    }
-
-    public Map<String, List<String>> queryParams() {
-        return queryParams;
     }
 
     @Override
