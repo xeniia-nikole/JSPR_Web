@@ -12,13 +12,10 @@ public class Server {
     private final Map<String, Map<String, Handler>> handlers;
     final Map<String, Handler> handlerMap = new HashMap<>();
     final ExecutorService threadPool = Executors.newFixedThreadPool(64);
-    public static final String GET = "GET";
-    public static final String POST = "POST";
 
     final List<String> validPaths = List.of("/index.html", "/spring.svg", "/spring.png",
             "/resources.html", "/styles.css", "/app.js", "/links.html",
             "/forms.html", "/classic.html", "/events.html", "/events.js");
-    final List<String> allowedMethods = List.of(GET, POST);
 
     public Server() {
         System.out.println("Server started");
@@ -31,7 +28,7 @@ public class Server {
 
             while (true) {
                 threadPool.execute(new ThreadServer(serverSocket.accept(),
-                        handlers, validPaths, allowedMethods));
+                        handlers, validPaths));
             }
 
         } catch (IOException e) {
@@ -50,7 +47,6 @@ class ThreadServer implements Runnable {
     private static Socket socket;
     protected final List<String> validPaths;
     private final Map<String, Map<String, Handler>> handlers;
-    private final List<String> allowedMethods;
     private final Handler notFoundHandler = (request, out) -> {
         try {
             out.write((
@@ -69,11 +65,10 @@ class ThreadServer implements Runnable {
 
 
     public ThreadServer(Socket client, Map<String, Map<String, Handler>> handlers,
-                        List<String> validPaths, List<String> allowedMethods) {
+                        List<String> validPaths) {
         ThreadServer.socket = client;
         this.handlers = handlers;
         this.validPaths = validPaths;
-        this.allowedMethods = allowedMethods;
     }
 
     @Override
@@ -81,7 +76,7 @@ class ThreadServer implements Runnable {
 
         try (final var input = socket.getInputStream();
              final var output = new BufferedOutputStream(socket.getOutputStream())) {
-            final var requestLine = Request.getFromInputStream(input, output, allowedMethods);
+            final var requestLine = Request.getFromInputStream(input);
 
             Map<String, Handler> handlerMap = handlers.get(requestLine.getMethod());
             if (handlerMap != null){
@@ -113,6 +108,4 @@ class ThreadServer implements Runnable {
             e.printStackTrace();
         }
     }
-
-
 }
